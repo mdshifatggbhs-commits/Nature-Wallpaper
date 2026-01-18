@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="208b99a51496a883" />
+    <title>Nature Wallpaper - HD Gallery</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e8f5e9; text-align: center; color: #2e7d32; }
+        header { background-color: #4caf50; color: white; padding: 30px; font-size: 28px; font-weight: bold; }
+        .upload-section { background: white; padding: 25px; border-radius: 15px; margin: 30px auto; width: 90%; max-width: 450px; border-top: 5px solid #4caf50; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #c8e6c9; border-radius: 8px; box-sizing: border-box; }
+        button { background-color: #4caf50; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; padding: 30px; }
+        .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .card img { width: 100%; height: 250px; object-fit: cover; }
+        .card-info { padding: 20px; text-align: left; }
+    </style>
+</head>
+<body>
+    <header>🌿 Nature Wallpaper Gallery</header>
+    <div class="upload-section">
+        <h3>প্রকৃতির নতুন ছবি যোগ করুন</h3>
+        <input type="file" id="fileInput" accept="image/*">
+        <input type="text" id="imgTitle" placeholder="ছবির সুন্দর একটি নাম দিন...">
+        <button id="uploadBtn" onclick="uploadImage()">গ্যালারিতে পাবলিশ করুন</button>
+    </div>
+    <div class="gallery" id="gallery"></div>
+    <script>
+        const cloudName = 'duu4w478s'; 
+        const uploadPreset = 'index.html'; 
+        let galleryData = JSON.parse(localStorage.getItem('nature_gallery_data')) || [];
+        function showGallery() {
+            const gallery = document.getElementById('gallery');
+            gallery.innerHTML = '';
+            galleryData.slice().reverse().forEach(item => {
+                gallery.innerHTML += `<div class="card"><img src="${item.url}"><div class="card-info"><h3>${item.title || 'Untitled'}</h3><a href="${item.url}" target="_blank">Full HD View</a></div></div>`;
+            });
+        }
+        async function uploadImage() {
+            const fileInput = document.getElementById('fileInput');
+            const titleInput = document.getElementById('imgTitle');
+            const file = fileInput.files[0];
+            const btn = document.getElementById('uploadBtn');
+            if (!file) return alert("দয়া করে ছবি সিলেক্ট করুন!");
+            btn.disabled = true; btn.innerText = "আপলোড হচ্ছে...";
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', uploadPreset);
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.secure_url) {
+                    galleryData.push({ url: data.secure_url, title: titleInput.value });
+                    localStorage.setItem('nature_gallery_data', JSON.stringify(galleryData));
+                    showGallery();
+                    alert("সফল হয়েছে!");
+                }
+            } catch (error) { alert("সমস্যা হয়েছে!"); } finally { btn.disabled = false; btn.innerText = "গ্যালারিতে পাবলিশ করুন"; }
+        }
+        showGallery();
+    </script>
+</body>
+</html>
