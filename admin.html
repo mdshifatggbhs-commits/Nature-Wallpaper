@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NatureMax Admin - Light</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f8fafc; color: #334155; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .admin-card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
+        h2 { color: #2e7d32; margin-bottom: 25px; font-size: 24px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: #2e7d32; ring: 2px solid #2e7d32; }
+        button { background-color: #2e7d32; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        #status { margin-top: 15px; font-weight: 600; font-size: 14px; color: #64748b; }
+        .back-link { display: block; margin-top: 20px; color: #64748b; text-decoration: none; font-size: 14px; }
+        
+        /* ডিলিট সেকশন */
+        .delete-section { margin-top: 30px; padding-top: 20px; border-top: 1px solid #f1f5f9; text-align: left; }
+        .delete-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f8fafc; font-size: 13px; }
+        .del-btn { background: #ef4444; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; width: auto; }
+    </style>
+</head>
+<body>
+
+<div class="admin-card" id="loginBox">
+    <h2>Admin Login</h2>
+    <input type="password" id="passInput" placeholder="Enter Secret Password">
+    <button onclick="doLogin()">Login</button>
+</div>
+
+<div class="admin-card" id="uploadBox" style="display:none;">
+    <h2>Upload Wallpaper</h2>
+    <p id="status">Ready</p>
+    <input type="text" id="imgTitle" placeholder="Wallpaper Title">
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">Publish to Website</button>
+    
+    <div class="delete-section">
+        <h3>Manage Images</h3>
+        <div id="imageList"></div>
+    </div>
+    
+    <a href="index.html" class="back-link">← Back to Gallery</a>
+</div>
+
+<script>
+    // আপনার Firebase Config (আগেরটাই থাকবে)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAd3zpyN-l6ugxFzw3ZqHvrsoWrifZt2QQ",
+        authDomain: "nature-wallpaper-21afd.firebaseapp.com",
+        projectId: "nature-wallpaper-21afd",
+        storageBucket: "nature-wallpaper-21afd.firebasestorage.app",
+        messagingSenderId: "794717954860",
+        appId: "1:794717954860:web:c4a1e89272f9fc58314289"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function doLogin() {
+        if(document.getElementById('passInput').value === "1234") {
+            document.getElementById('loginBox').style.display = "none";
+            document.getElementById('uploadBox').style.display = "block";
+            loadList();
+        } else { alert("Wrong Password!"); }
+    }
+
+    async function uploadImage() {
+        const file = document.getElementById('imageInput').files[0];
+        const title = document.getElementById('imgTitle').value;
+        const status = document.getElementById('status');
+        if(!file) return alert("Select image first");
+
+        status.innerText = "⏳ Uploading...";
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', "nature_preset");
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/duu4w478s/image/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if(data.secure_url) {
+            await db.collection("wallpapers").add({ url: data.secure_url, title: title || "Nature", createdAt: new Date() });
+            status.innerText = "✅ Done!";
+            document.getElementById('imageInput').value = "";
+        }
+    }
+
+    function loadList() {
+        db.collection("wallpapers").orderBy("createdAt", "desc").onSnapshot(snap => {
+            const list = document.getElementById('imageList');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                list.innerHTML += `<div class="delete-item"><span>${d.title}</span><button class="del-btn" onclick="delPic('${doc.id}')">Delete</button></div>`;
+            });
+        });
+    }
+
+    async function delPic(id) {
+        if(confirm("Sure to delete?")) await db.collection("wallpapers").doc(id).delete();
+    }
+</script>
+</body>
+</html>
