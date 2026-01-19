@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Wallpapers</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; text-align: center; }
+        
+        .admin-container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        h2 { color: #333; margin-bottom: 20px; }
+        
+        /* Admin Grid */
+        #adminList { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin-top: 20px; 
+        }
+        
+        .admin-card { 
+            position: relative; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            height: 120px;
+        }
+        
+        .admin-card img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+        }
+
+        /* Delete Button Style */
+        .delete-btn { 
+            position: absolute; 
+            top: 5px; 
+            right: 5px; 
+            background: rgba(255, 0, 0, 0.8); 
+            color: white; 
+            border: none; 
+            width: 25px; 
+            height: 25px; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover { background: red; transform: scale(1.1); }
+
+        .back-btn { margin-top: 20px; display: inline-block; text-decoration: none; color: #555; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <h2>Admin Control Panel</h2>
+    <p>এখান থেকে আপনি ছবিগুলো ডিলিট করতে পারবেন</p>
+    
+    <div id="adminList">
+        </div>
+
+    <a href="index.html" class="back-btn">← মূল ওয়েবসাইটে ফিরে যান</a>
+</div>
+
+<script>
+    // Firebase থেকে ডাটা লোড করা
+    db.collection("wallpapers").orderBy("createdAt", "desc").onSnapshot(snap => {
+        const list = document.getElementById('adminList');
+        list.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `
+                <div class="admin-card">
+                    <img src="${d.url}">
+                    <button class="delete-btn" onclick="deletePic('${doc.id}')">✕</button>
+                </div>`;
+        });
+    });
+
+    // ছবি ডিলিট করার ফাংশন
+    async function deletePic(id) {
+        if(confirm("আপনি কি নিশ্চিত যে এই ছবিটি ডিলিট করতে চান?")) {
+            try {
+                await db.collection("wallpapers").doc(id).delete();
+                alert("ছবিটি সফলভাবে ডিলিট হয়েছে।");
+            } catch (error) {
+                alert("ভুল হয়েছে: " + error.message);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
