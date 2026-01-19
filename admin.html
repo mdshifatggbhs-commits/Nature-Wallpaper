@@ -1,0 +1,43 @@
+<div id="uploadBox" style="display:none; padding: 20px;">
+    <div style="background:white; padding:20px; border-radius:10px; border:1px solid #eee; margin-bottom:20px;">
+        <h3>Upload New Wallpaper</h3>
+        <input type="text" id="imgTitle" placeholder="Enter Wallpaper Title" style="width:100%; padding:10px; margin:10px 0;">
+        <input type="file" id="imageInput" style="width:100%; margin:10px 0;">
+        <button onclick="uploadImage()" style="width:100%; background:#2e7d32; color:white; padding:12px; border:none; border-radius:5px; font-weight:bold;">Upload & Publish</button>
+    </div>
+
+    <h3 style="margin-top:30px;">Manage Your Uploads (Delete)</h3>
+    <div id="adminGallery" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; text-align:center;">
+        </div>
+</div>
+
+<script>
+    // Login howar por loadAdminGallery call kora hobe
+    function onLoginSuccess() {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('uploadBox').style.display = 'block';
+        loadAdminGallery();
+    }
+
+    function loadAdminGallery() {
+        db.collection("wallpapers").orderBy("createdAt", "desc").onSnapshot(snap => {
+            const list = document.getElementById('adminGallery');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                list.innerHTML += `
+                    <div style="background:#fff; border:1px solid #eee; border-radius:5px; overflow:hidden;">
+                        <img src="${d.url}" style="width:100%; height:100px; object-fit:cover;">
+                        <button onclick="deleteImg('${doc.id}')" style="width:100%; background:#ef4444; color:white; border:none; padding:5px; font-size:11px; cursor:pointer;">DELETE</button>
+                    </div>`;
+            });
+        });
+    }
+
+    async function deleteImg(id) {
+        if(confirm("Are you sure you want to delete this picture?")) {
+            await db.collection("wallpapers").doc(id).delete();
+            alert("Picture deleted!");
+        }
+    }
+</script>
